@@ -31,9 +31,9 @@ err_list = [list(),list()]
 
 for i in range(2):
     if i == 0:
-        xml_path = "/home/hpx/HPX_LOCO_2/GMR/human_skeleton.xml"
+        xml_path = "human_skeleton.xml"
     elif i == 1:
-        xml_path = "/home/hpx/HPX_LOCO_2/GMR/assets/Q1P01/mjcf/Q1_01.xml"
+        xml_path = "assets/Q1P01/mjcf/Q1_01.xml"
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)
 

@@ -21,7 +21,7 @@ if __name__ == "__main__":
         help="SMPLX motion file to load.",
         type=str,
         # required=True,
-        default="/home/yanjieze/projects/g1_wbc/GMR/GVHMR/outputs/demo/tennis/hmr4d_results.pt",
+        required=True,
     )
     
     parser.add_argument(
@@ -60,7 +60,10 @@ if __name__ == "__main__":
         help="Limit the rate of the retargeted robot motion to keep the same as the human motion.",
     )
 
+    parser.add_argument("--headless", action="store_true", help="Retarget without opening a viewer.")
     args = parser.parse_args()
+    if args.headless and (args.loop or args.record_video):
+        parser.error("--headless cannot be combined with --loop or --record_video")
 
 
     SMPLX_FOLDER = HERE / ".." / "assets" / "body_models"
@@ -84,7 +87,7 @@ if __name__ == "__main__":
         tgt_robot=args.robot,
     )
     
-    robot_motion_viewer = RobotMotionViewer(robot_type=args.robot,
+    robot_motion_viewer = None if args.headless else RobotMotionViewer(robot_type=args.robot,
                                             motion_fps=aligned_fps,
                                             transparent_robot=0,
                                             record_video=args.record_video,
@@ -104,7 +107,7 @@ if __name__ == "__main__":
         qpos_list = []
     
     # Start the viewer
-    i = 0
+    i = -1
 
     while True:
         if args.loop:
@@ -130,16 +133,16 @@ if __name__ == "__main__":
         qpos = retarget.retarget(smplx_data)
 
         # visualize
-        robot_motion_viewer.step(
-            root_pos=qpos[:3],
-            root_rot=qpos[3:7],
-            dof_pos=qpos[7:],
-            human_motion_data=retarget.scaled_human_data,
-            # human_motion_data=smplx_data,
-            human_pos_offset=np.array([0.0, 0.0, 0.0]),
-            show_human_body_name=False,
-            rate_limit=args.rate_limit,
-        )
+        if robot_motion_viewer is not None:
+            robot_motion_viewer.step(
+                root_pos=qpos[:3],
+                root_rot=qpos[3:7],
+                dof_pos=qpos[7:],
+                human_motion_data=retarget.scaled_human_data,
+                human_pos_offset=np.array([0.0, 0.0, 0.0]),
+                show_human_body_name=False,
+                rate_limit=args.rate_limit,
+            )
         if args.save_path is not None:
             qpos_list.append(qpos)
             
@@ -166,4 +169,5 @@ if __name__ == "__main__":
             
       
     
-    robot_motion_viewer.close()
+    if robot_motion_viewer is not None:
+        robot_motion_viewer.close()
